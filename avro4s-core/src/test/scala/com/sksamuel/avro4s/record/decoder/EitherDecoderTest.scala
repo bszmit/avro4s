@@ -1,7 +1,8 @@
 package com.sksamuel.avro4s.record.decoder
 
-import com.sksamuel.avro4s.{AvroName, AvroNamespace, AvroSchema, Decoder, DefaultFieldMapper, ImmutableRecord}
+import com.sksamuel.avro4s.{AvroName, AvroNamespace, AvroSchema, Decoder, DefaultFieldMapper, Encoder, ImmutableRecord}
 import org.apache.avro.SchemaBuilder
+import org.apache.avro.generic.GenericData
 import org.apache.avro.util.Utf8
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
@@ -12,6 +13,8 @@ case class Foo(b: Boolean)
 case class Test2(either: Either[Goo, Foo])
 
 class EitherDecoderTest extends AnyFunSuite with Matchers {
+
+  import scala.collection.JavaConverters._
 
   case class Voo(s: String)
   case class Woo(b: Boolean)
@@ -32,6 +35,8 @@ class EitherDecoderTest extends AnyFunSuite with Matchers {
   case class Orange(b: Boolean)
 
   case class Test5(either: Either[Apple, Orange])
+
+  case class Test6(either: Either[String, Seq[Double]])
 
   test("decode union:T,U for Either[T,U] of primitives") {
     val schema = AvroSchema[Test]
@@ -71,6 +76,14 @@ class EitherDecoderTest extends AnyFunSuite with Matchers {
 
     Decoder[Test5].decode(ImmutableRecord(schema, Vector(ImmutableRecord(orangeschema, Vector(java.lang.Boolean.valueOf(true))))), schema, DefaultFieldMapper) shouldBe Test5(Right(Orange(true)))
     Decoder[Test5].decode(ImmutableRecord(schema, Vector(ImmutableRecord(appleschema, Vector(new Utf8("zzz"))))), schema, DefaultFieldMapper) shouldBe Test5(Left(Apple("zzz")))
+  }
+
+  test("decode union:T,U for Either[T,U] of primitive and array") {
+    val schema = AvroSchema[Test6]
+    val array = new GenericData.Array[java.lang.Double](AvroSchema[Seq[Double]], Seq(java.lang.Double.valueOf(234.4D), java.lang.Double.valueOf(235.5D)).asJava)
+
+    Decoder[Test6].decode(ImmutableRecord(schema, Vector(new Utf8("foo"))), schema, DefaultFieldMapper) shouldBe Test6(Left("foo"))
+    Decoder[Test6].decode(ImmutableRecord(schema, Vector(array)), schema, DefaultFieldMapper) shouldBe Test6(Right(Seq(234.4D, 235.5D)))
   }
 }
 
