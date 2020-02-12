@@ -324,8 +324,8 @@ object Decoder {
 
       // do we have a type of A or a type of B?
       // we need to extract the schema from the union
-      safeFromA.safeFrom(value, schema, fieldMapper).map(Left[A, B])
-        .orElse(safeFromB.safeFrom(value, schema, fieldMapper).map(Right[A, B]))
+      safeFromA.safeFrom(value, schema.getTypes.get(0), fieldMapper).map(Left[A, B])
+        .orElse(safeFromB.safeFrom(value, schema.getTypes.get(1), fieldMapper).map(Right[A, B]))
         .getOrElse {
           sys.error(s"Could not decode $value into Either[$nameA, $nameB]")
         }
